@@ -1,0 +1,17 @@
+{
+  "name": "Estoque ACA",
+  "short_name": "ACA Estoque",
+  "description": "Sistema de Orçamentos ACA",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#4338ca",
+  "theme_color": "#4338ca",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3081/3081840.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
