@@ -3,124 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estoque ACA - Orçamento Detalhado</title>
+    <title>Estoque ACA - Nuvem</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4338ca">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Sua configuração extraída da imagem
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmnh6bYskf3kOon7i5tePMqZ6DVyWNwaA",
+            authDomain: "estoque-aca.firebaseapp.com",
+            projectId: "estoque-aca",
+            storageBucket: "estoque-aca.firebasestorage.app",
+            messagingSenderId: "73406272044",
+            appId: "1:73406272044:web:665438ca5db0c8924223789"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Tornar funções globais para o HTML usar
+        window.db = db;
+        window.writeBatch = writeBatch;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.collection = collection;
+        window.getDocs = getDocs;
+
+        // Carregar dados assim que o Firebase iniciar
+        window.addEventListener('load', carregarDadosNuvem);
+    </script>
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-900 pb-20">
 
     <div class="max-w-7xl mx-auto p-2 sm:p-6">
         <header class="bg-indigo-800 text-white rounded-2xl p-6 shadow-lg mb-6 flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-black uppercase tracking-tighter">Estoque ACA</h1>
-                <p class="text-indigo-200 text-xs">Filtros: <span class="bg-indigo-900 px-1 rounded text-[10px]">tam:36</span> | <span class="bg-indigo-900 px-1 rounded text-[10px]">cor:azul</span></p>
+                <h1 class="text-2xl font-black uppercase tracking-tighter">Estoque ACA ☁️</h1>
+                <p id="statusNuvem" class="text-indigo-200 text-[10px]">Carregando dados da nuvem...</p>
             </div>
-            <button onclick="toggleOrcamento()" class="bg-white text-indigo-800 px-5 py-2.5 rounded-xl font-bold shadow-md hover:bg-indigo-50 transition-all flex items-center gap-2">
+            <button onclick="toggleOrcamento()" class="bg-white text-indigo-800 px-5 py-2.5 rounded-xl font-bold shadow-md flex items-center gap-2">
                 🛒 Orçamento (<span id="cartCount">0</span>)
             </button>
         </header>
 
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-2">
-                <label class="text-xs font-bold text-slate-500 uppercase">1. Importar Relatório</label>
+                <label class="text-xs font-bold text-slate-500 uppercase">1. Atualizar Estoque (Upload Diário)</label>
                 <input type="file" id="fileInput" accept=".txt" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-indigo-50 file:text-indigo-700 cursor-pointer border rounded-xl" />
             </div>
             <div class="space-y-2">
-                <label class="text-xs font-bold text-slate-500 uppercase">2. Pesquisa Inteligente</label>
-                <input type="text" id="searchInput" placeholder="Busque descrição ou use tam:38..." class="w-full p-2.5 bg-slate-50 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none shadow-inner" />
+                <label class="text-xs font-bold text-slate-500 uppercase">2. Pesquisa</label>
+                <input type="text" id="searchInput" placeholder="Busque descrição ou use tam:38..." class="w-full p-2.5 bg-slate-50 border rounded-xl outline-none shadow-inner" />
             </div>
         </div>
 
         <div class="bg-white rounded-2xl shadow-xl border overflow-hidden hidden" id="tableContainer">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-200">
-                    <thead class="bg-slate-50 text-slate-500">
-                        <tr>
-                            <th class="px-4 py-4 text-left text-xs font-black uppercase tracking-wider">NCE</th>
-                            <th class="px-4 py-4 text-left text-xs font-black uppercase tracking-wider">Tam</th>
-                            <th class="px-4 py-4 text-left text-xs font-black uppercase tracking-wider">Descrição / Cor</th>
-                            <th class="px-4 py-4 text-right text-xs font-black uppercase tracking-wider">Preço</th>
-                            <th class="px-4 py-4 text-center text-xs font-black uppercase tracking-wider">Add</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="divide-y divide-slate-100 bg-white"></tbody>
-                </table>
-            </div>
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50 text-slate-500">
+                    <tr>
+                        <th class="px-4 py-4 text-left text-xs font-black uppercase">NCE</th>
+                        <th class="px-4 py-4 text-left text-xs font-black uppercase">Tam</th>
+                        <th class="px-4 py-4 text-left text-xs font-black uppercase">Descrição</th>
+                        <th class="px-4 py-4 text-right text-xs font-black uppercase">Preço</th>
+                        <th class="px-4 py-4 text-center text-xs font-black uppercase">Add</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody" class="divide-y divide-slate-100 bg-white"></tbody>
+            </table>
         </div>
 
         <div id="orcamentoModal" class="fixed inset-0 bg-slate-900/60 z-50 hidden flex justify-end backdrop-blur-sm">
             <div class="w-full max-w-lg bg-white h-full shadow-2xl p-6 flex flex-col">
                 <div class="flex justify-between items-center mb-6 border-b pb-4">
-                    <h2 class="text-2xl font-black text-indigo-700 uppercase">Lista de Orçamento</h2>
+                    <h2 class="text-2xl font-black text-indigo-700 uppercase">Orçamento</h2>
                     <button onclick="toggleOrcamento()" class="text-slate-400 text-3xl">&times;</button>
                 </div>
-                
                 <div id="pdfArea" class="flex-1 overflow-y-auto pr-2">
                     <div id="orcamentoItens" class="space-y-4"></div>
                     <div class="mt-8 border-t-4 border-double pt-6">
                         <div class="flex justify-between items-center">
-                            <span class="text-xl font-bold text-slate-600 uppercase">Total Geral:</span>
+                            <span class="text-xl font-bold text-slate-600 uppercase">Total:</span>
                             <span id="totalOrcamento" class="text-3xl font-black text-indigo-800">R$ 0,00</span>
                         </div>
                     </div>
                 </div>
-
                 <div class="mt-8 grid grid-cols-2 gap-3">
-                    <button onclick="gerarPDF()" class="bg-slate-800 text-white font-bold py-4 rounded-2xl flex flex-col items-center justify-center shadow-lg hover:bg-slate-900">
-                        📄 Baixar PDF
-                    </button>
-                    <button onclick="enviarWhatsApp()" class="bg-emerald-600 text-white font-bold py-4 rounded-2xl flex flex-col items-center justify-center shadow-lg hover:bg-emerald-700">
-                        📱 WhatsApp
-                    </button>
-                    <button onclick="limparOrcamento()" class="col-span-2 text-slate-400 text-xs font-bold py-2 mt-2 uppercase tracking-widest text-center hover:text-red-500">
-                        Zerar Orçamento
-                    </button>
+                    <button onclick="gerarPDF()" class="bg-slate-800 text-white font-bold py-4 rounded-2xl">PDF</button>
+                    <button onclick="enviarWhatsApp()" class="bg-emerald-600 text-white font-bold py-4 rounded-2xl">WhatsApp</button>
+                    <button onclick="limparOrcamento()" class="col-span-2 text-slate-400 text-xs py-2 uppercase text-center">Zerar</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let ultimoNCE = "";
         let orcamento = [];
+        let produtosGerais = [];
 
-        // --- INICIALIZAÇÃO (LocalStorage) ---
-        window.addEventListener('DOMContentLoaded', () => {
-            const salvo = localStorage.getItem('orcamento_aca');
-            if (salvo) {
-                orcamento = JSON.parse(salvo);
-                atualizarCarrinho(false);
-            }
-        });
-
-        function salvarDados() {
-            localStorage.setItem('orcamento_aca', JSON.stringify(orcamento));
-        }
-
-        // --- REGISTRO DO SERVICE WORKER (PWA) ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('SW registrado!'))
-                    .catch(err => console.log('Erro SW:', err));
-            });
-        }
-
-        document.getElementById('fileInput').addEventListener('change', function(e) {
+        // --- SALVAR NO FIREBASE (Uploader) ---
+        document.getElementById('fileInput').addEventListener('change', async function(e) {
             const reader = new FileReader();
-            reader.onload = (event) => renderTable(event.target.result.split('\n'));
+            reader.onload = async (event) => {
+                const lines = event.target.result.split('\n');
+                await processarEEnviarParaNuvem(lines);
+            };
             reader.readAsText(e.target.files[0]);
         });
 
-        function renderTable(lines) {
-            const tableBody = document.getElementById('tableBody');
-            tableBody.innerHTML = '';
-            ultimoNCE = "";
+        async function processarEEnviarParaNuvem(lines) {
+            document.getElementById('statusNuvem').textContent = "☁️ Enviando para nuvem... aguarde";
+            let ultimoNCE = "";
+            let produtos = [];
+
             lines.forEach(line => {
                 const cleanLine = line.replace('@', '').replace('\r', '');
                 if (cleanLine.includes('====') || cleanLine.includes('Relacao') || cleanLine.trim().length < 40) return;
@@ -134,31 +135,65 @@
                 if (nce && !isNaN(nce)) ultimoNCE = nce;
 
                 if (desc.length > 5 && precoStr !== "") {
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-indigo-50/50 transition-colors";
-                    tr.setAttribute('data-tam', tam.toLowerCase());
-                    tr.setAttribute('data-nce', ultimoNCE.toLowerCase());
-                    tr.setAttribute('data-cor', cor.toLowerCase());
-                    
-                    tr.innerHTML = `
-                        <td class="px-4 py-4 font-mono font-bold text-indigo-700 text-sm">${ultimoNCE}</td>
-                        <td class="px-4 py-4 text-slate-600 font-black">${tam}</td>
-                        <td class="px-4 py-4">
-                            <div class="font-bold text-slate-800 uppercase text-xs">${desc}</div>
-                            <div class="text-[10px] text-slate-400 italic uppercase">${cor}</div>
-                        </td>
-                        <td class="px-4 py-4 text-right font-black text-slate-900 text-sm">R$ ${precoStr}</td>
-                        <td class="px-4 py-4 text-center">
-                            <button onclick="addOrcamento('${ultimoNCE}', '${desc}', '${tam}', '${precoStr}')" 
-                                class="bg-indigo-600 text-white w-9 h-9 rounded-xl font-bold shadow-md hover:scale-105 active:scale-95 transition-all text-xl">+</button>
-                        </td>
-                    `;
-                    tableBody.appendChild(tr);
+                    produtos.push({ nce: ultimoNCE, tam, cor, desc, preco: precoStr });
                 }
+            });
+
+            // Salva no Firebase (Usa um documento único para ser rápido)
+            try {
+                await setDoc(doc(window.db, "estoque", "atual"), { 
+                    lista: produtos,
+                    data: new Date().toLocaleString()
+                });
+                document.getElementById('statusNuvem').textContent = "✅ Estoque Atualizado na Nuvem!";
+                renderTable(produtos);
+            } catch (e) {
+                alert("Erro ao salvar na nuvem: " + e);
+            }
+        }
+
+        async function carregarDadosNuvem() {
+            try {
+                const docSnap = await getDoc(doc(window.db, "estoque", "atual"));
+                if (docSnap.exists()) {
+                    produtosGerais = docSnap.data().lista;
+                    renderTable(produtosGerais);
+                    document.getElementById('statusNuvem').textContent = "☁️ Nuvem conectada | Atualizado em: " + docSnap.data().data;
+                } else {
+                    document.getElementById('statusNuvem').textContent = "☁️ Nuvem vazia. Faça o primeiro upload.";
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderTable(produtos) {
+            produtosGerais = produtos;
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            produtos.forEach((p, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-indigo-50/50";
+                tr.setAttribute('data-tam', p.tam.toLowerCase());
+                tr.setAttribute('data-nce', p.nce.toLowerCase());
+                tr.innerHTML = `
+                    <td class="px-4 py-4 font-bold text-indigo-700 text-sm">${p.nce}</td>
+                    <td class="px-4 py-4 text-slate-600 font-black">${p.tam}</td>
+                    <td class="px-4 py-4">
+                        <div class="font-bold text-xs uppercase">${p.desc}</div>
+                        <div class="text-[10px] text-slate-400 italic">${p.cor}</div>
+                    </td>
+                    <td class="px-4 py-4 text-right font-black text-sm">R$ ${p.preco}</td>
+                    <td class="px-4 py-4 text-center">
+                        <button onclick="addOrcamento('${p.nce}', '${p.desc}', '${p.tam}', '${p.preco}')" class="bg-indigo-600 text-white w-8 h-8 rounded-lg font-bold">+</button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
             });
             document.getElementById('tableContainer').classList.remove('hidden');
         }
 
+        // --- BUSCA, ORÇAMENTO E PERSISTÊNCIA LOCAL (Sugestão 1 e 2 Mantidas) ---
         document.getElementById('searchInput').addEventListener('input', function() {
             const input = this.value.toLowerCase().trim();
             const rows = document.querySelectorAll('#tableBody tr');
@@ -182,88 +217,65 @@
             atualizarCarrinho();
         }
 
-        function alterarQtd(index, delta) {
-            orcamento[index].qtd += delta;
-            if (orcamento[index].qtd <= 0) orcamento.splice(index, 1);
-            atualizarCarrinho();
-        }
-
         function atualizarCarrinho(deveSalvar = true) {
             document.getElementById('cartCount').textContent = orcamento.reduce((acc, i) => acc + i.qtd, 0);
             const container = document.getElementById('orcamentoItens');
             container.innerHTML = '';
             let totalGeral = 0;
-
             orcamento.forEach((item, index) => {
                 let valorUnitario = parseFloat(item.preco.replace(/\./g, '').replace(',', '.'));
                 if (item.preco.includes('.')) valorUnitario = valorUnitario / 100;
-                
                 const subtotal = valorUnitario * item.qtd;
                 totalGeral += subtotal;
-
                 container.innerHTML += `
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <div class="flex justify-between items-start mb-2">
-                            <div class="max-w-[70%]">
-                                <p class="text-[10px] text-indigo-600 font-black">#${item.nce}</p>
-                                <p class="font-black text-slate-800 uppercase text-xs leading-tight">${item.desc}</p>
-                                <p class="text-[10px] text-slate-500 font-bold">TAMANHO: ${item.tam}</p>
-                            </div>
-                            <span class="font-black text-indigo-900 text-sm">R$ ${subtotal.toLocaleString('pt-br', {minimumFractionDigits: 2})}</span>
+                    <div class="bg-slate-50 p-3 rounded-xl border mb-2">
+                        <div class="flex justify-between font-bold text-xs">
+                            <span>${item.qtd}x ${item.desc} (${item.tam})</span>
+                            <span>R$ ${subtotal.toLocaleString('pt-br', {minimumFractionDigits: 2})}</span>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-2 bg-white border rounded-lg p-1">
-                                <button onclick="alterarQtd(${index}, -1)" class="w-7 h-7 flex items-center justify-center bg-slate-50 rounded font-black">-</button>
-                                <span class="font-black text-sm w-4 text-center">${item.qtd}</span>
-                                <button onclick="alterarQtd(${index}, 1)" class="w-7 h-7 flex items-center justify-center bg-slate-50 rounded font-black">+</button>
-                            </div>
-                            <button onclick="removerItem(${index})" class="text-red-500 text-[10px] font-bold uppercase">Excluir</button>
+                        <div class="flex gap-4 mt-2">
+                            <button onclick="alterarQtd(${index}, -1)" class="bg-white border px-2 rounded">-</button>
+                            <button onclick="alterarQtd(${index}, 1)" class="bg-white border px-2 rounded">+</button>
+                            <button onclick="removerItem(${index})" class="text-red-500 text-[10px]">REMOVER</button>
                         </div>
                     </div>`;
             });
             document.getElementById('totalOrcamento').textContent = `R$ ${totalGeral.toLocaleString('pt-br', {minimumFractionDigits: 2})}`;
-            
-            if (deveSalvar) salvarDados();
+            if (deveSalvar) localStorage.setItem('orcamento_aca', JSON.stringify(orcamento));
         }
 
+        function alterarQtd(index, delta) {
+            orcamento[index].qtd += delta;
+            if (orcamento[index].qtd <= 0) orcamento.splice(index, 1);
+            atualizarCarrinho();
+        }
         function removerItem(index) { orcamento.splice(index, 1); atualizarCarrinho(); }
         function toggleOrcamento() { document.getElementById('orcamentoModal').classList.toggle('hidden'); }
-        
-        function limparOrcamento() { 
-            if(confirm("Deseja limpar?")) { 
-                orcamento = []; 
-                localStorage.removeItem('orcamento_aca'); 
-                atualizarCarrinho(false); 
-            } 
-        }
+        function limparOrcamento() { if(confirm("Zerar?")) { orcamento = []; localStorage.removeItem('orcamento_aca'); atualizarCarrinho(false); } }
 
         function gerarPDF() {
-            if(orcamento.length === 0) return;
             const element = document.getElementById('pdfArea');
-            const opt = { 
-                margin: 10, filename: 'Orcamento_ACA.pdf', 
-                html2canvas: { scale: 3 }, jsPDF: { unit: 'mm', format: 'a4' } 
-            };
-            const header = `<div style="text-align:center; padding-bottom:15px; border-bottom:2px solid #4338ca; margin-bottom:20px">
-                                <h1 style="color:#4338ca; font-size:22px; margin:0">ORÇAMENTO - ESTOQUE ACA</h1>
-                                <p style="font-size:10px; color:#666">Gerado em: ${new Date().toLocaleString('pt-br')}</p>
-                            </div>`;
-            const original = element.innerHTML;
-            element.innerHTML = header + original;
-            html2pdf().set(opt).from(element).save().then(() => element.innerHTML = original);
+            html2pdf().from(element).save('Orcamento_ACA.pdf');
         }
 
         function enviarWhatsApp() {
-            if(orcamento.length === 0) return;
-            let msg = "📝 *NOVO ORÇAMENTO ACA*\n\n";
+            let msg = "*ORÇAMENTO ACA*\n\n";
             orcamento.forEach(i => {
-                let valorUnitario = parseFloat(i.preco.replace(/\./g, '').replace(',', '.'));
-                if (i.preco.includes('.')) valorUnitario = valorUnitario / 100;
-                const val = valorUnitario * i.qtd;
-                msg += `✅ *${i.qtd}x* ${i.desc}\n   - Tam: ${i.tam} | Valor: R$ ${val.toLocaleString('pt-br', {minimumFractionDigits: 2})}\n\n`;
+                let vU = parseFloat(i.preco.replace(/\./g, '').replace(',', '.'));
+                if (i.preco.includes('.')) vU = vU / 100;
+                msg += `• ${i.qtd}x ${i.desc} (T: ${i.tam}) - R$ ${(vU*i.qtd).toFixed(2)}\n`;
             });
-            msg += `💰 *TOTAL GERAL: ${document.getElementById('totalOrcamento').textContent}*`;
+            msg += `\n*TOTAL: ${document.getElementById('totalOrcamento').textContent}*`;
             window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
+        }
+        
+        // Carregar carrinho local ao abrir
+        const salvo = localStorage.getItem('orcamento_aca');
+        if (salvo) { orcamento = JSON.parse(salvo); atualizarCarrinho(false); }
+
+        // Registrar SW para PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js');
         }
     </script>
 </body>
