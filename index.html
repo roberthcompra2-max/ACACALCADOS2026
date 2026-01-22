@@ -16,7 +16,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Sua configuração confirmada
         const firebaseConfig = {
             apiKey: "AIzaSyCmnh6bYskf3kOon7i5tePMqZ6DVyWNwaA",
             authDomain: "estoque-aca.firebaseapp.com",
@@ -29,14 +28,14 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Exportando funções para o escopo global de forma robusta
         window.db = db;
         window.doc = doc;
         window.setDoc = setDoc;
         window.getDoc = getDoc;
 
-        // Dispara o carregamento assim que o Firebase estiver pronto
-        window.carregarDadosNuvem();
+        window.addEventListener('load', () => {
+            setTimeout(carregarDadosNuvem, 500);
+        });
     </script>
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-900 pb-20">
@@ -58,7 +57,7 @@
                 <input type="file" id="fileInput" accept=".txt" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-indigo-50 file:text-indigo-700 cursor-pointer border rounded-xl" />
             </div>
             <div class="space-y-2">
-                <label class="text-xs font-bold text-slate-500 uppercase">2. Pesquisa</label>
+                <label class="text-xs font-bold text-slate-500 uppercase">2. Pesquisa Inteligente</label>
                 <input type="text" id="searchInput" placeholder="Busque descrição ou use tam:38..." class="w-full p-2.5 bg-slate-50 border rounded-xl outline-none shadow-inner" />
             </div>
         </div>
@@ -70,7 +69,7 @@
                         <tr>
                             <th class="px-4 py-4 text-left text-xs font-black uppercase">NCE</th>
                             <th class="px-4 py-4 text-left text-xs font-black uppercase">Tam</th>
-                            <th class="px-4 py-4 text-left text-xs font-black uppercase">Descrição</th>
+                            <th class="px-4 py-4 text-left text-xs font-black uppercase">Descrição / Cor</th>
                             <th class="px-4 py-4 text-right text-xs font-black uppercase">Preço</th>
                             <th class="px-4 py-4 text-center text-xs font-black uppercase">Add</th>
                         </tr>
@@ -108,16 +107,12 @@
         let orcamento = [];
         let produtosGerais = [];
 
-        // Função de carregamento corrigida para rodar assim que o Firebase estiver pronto
         async function carregarDadosNuvem() {
             const statusEl = document.getElementById('statusNuvem');
-            // Pequeno delay para garantir que o Firebase inicializou os exports
-            if (!window.db) { setTimeout(carregarDadosNuvem, 500); return; }
+            if (!window.db) return;
 
             try {
-                const docRef = window.doc(window.db, "estoque", "atual");
-                const docSnap = await window.getDoc(docRef);
-
+                const docSnap = await window.getDoc(window.doc(window.db, "estoque", "atual"));
                 if (docSnap.exists()) {
                     const dados = docSnap.data();
                     produtosGerais = dados.lista;
@@ -127,8 +122,7 @@
                     statusEl.textContent = "☁️ Nuvem vazia. Importe o arquivo.";
                 }
             } catch (e) {
-                console.error(e);
-                statusEl.textContent = "❌ Erro ao buscar dados na nuvem.";
+                statusEl.textContent = "❌ Erro ao buscar dados.";
             }
         }
 
@@ -143,13 +137,23 @@
         });
 
         async function processarEEnviarParaNuvem(lines) {
-            document.getElementById('statusNuvem').textContent = "☁️ Enviando para nuvem...";
+            document.getElementById('statusNuvem').textContent = "☁️ Filtrando e Enviando...";
             let ultimoNCE = "";
             let produtos = [];
 
             lines.forEach(line => {
                 const cleanLine = line.replace('@', '').replace('\r', '');
-                if (cleanLine.includes('====') || cleanLine.includes('Relacao') || cleanLine.trim().length < 40) return;
+                
+                // Filtros para remover cabeçalhos do aca.txt
+                if (
+                    cleanLine.includes('====') || 
+                    cleanLine.includes('Relacao') || 
+                    cleanLine.includes('Almoxarifado') || 
+                    cleanLine.includes('Descricao') || 
+                    cleanLine.includes('Situacao') || 
+                    cleanLine.includes('Grupo N.C.E') ||
+                    cleanLine.trim().length < 40
+                ) return;
 
                 let nce = cleanLine.substring(6, 13).trim();
                 let tam = cleanLine.substring(13, 18).trim();
@@ -158,7 +162,8 @@
                 let precoStr = cleanLine.substring(107, 118).trim();
 
                 if (nce && !isNaN(nce)) ultimoNCE = nce;
-                if (desc.length > 5 && precoStr !== "") {
+                
+                if (desc.length > 5 && precoStr !== "" && !desc.includes('Mercadorias')) {
                     produtos.push({ nce: ultimoNCE, tam, cor, desc, preco: precoStr });
                 }
             });
@@ -194,7 +199,7 @@
                     <td class="px-4 py-4 text-right font-black text-slate-900 text-sm">R$ ${p.preco}</td>
                     <td class="px-4 py-4 text-center">
                         <button onclick="addOrcamento('${p.nce}', '${p.desc}', '${p.tam}', '${p.preco}')" 
-                            class="bg-indigo-600 text-white w-9 h-9 rounded-xl font-bold shadow-md hover:scale-105 active:scale-95 transition-all text-xl">+</button>
+                            class="bg-indigo-600 text-white w-9 h-9 rounded-xl font-bold shadow-md text-xl">+</button>
                     </td>
                 `;
                 tableBody.appendChild(tr);
@@ -268,12 +273,11 @@
         }
         function removerItem(index) { orcamento.splice(index, 1); atualizarCarrinho(); }
         function toggleOrcamento() { document.getElementById('orcamentoModal').classList.toggle('hidden'); }
-        function limparOrcamento() { if(confirm("Deseja limpar?")) { orcamento = []; localStorage.removeItem('orcamento_aca'); atualizarCarrinho(false); } }
+        function limparOrcamento() { if(confirm("Limpar Orçamento?")) { orcamento = []; localStorage.removeItem('orcamento_aca'); atualizarCarrinho(false); } }
 
         function gerarPDF() {
             const element = document.getElementById('pdfArea');
-            const opt = { margin: 10, filename: 'Orcamento_ACA.pdf', html2canvas: { scale: 3 }, jsPDF: { unit: 'mm', format: 'a4' } };
-            html2pdf().set(opt).from(element).save();
+            html2pdf().from(element).save('Orcamento_ACA.pdf');
         }
 
         function enviarWhatsApp() {
@@ -282,17 +286,15 @@
             orcamento.forEach(i => {
                 let vU = parseFloat(i.preco.replace(/\./g, '').replace(',', '.'));
                 if (i.preco.includes('.')) vU = vU / 100;
-                msg += `✅ *${i.qtd}x* ${i.desc}\n   - Tam: ${i.tam} | Valor: R$ ${(vU*i.qtd).toLocaleString('pt-br', {minimumFractionDigits: 2})}\n\n`;
+                msg += `✅ *${i.qtd}x* ${i.desc} (${i.tam}) - R$ ${(vU*i.qtd).toLocaleString('pt-br', {minimumFractionDigits: 2})}\n`;
             });
-            msg += `💰 *TOTAL GERAL: ${document.getElementById('totalOrcamento').textContent}*`;
+            msg += `\n💰 *TOTAL GERAL: ${document.getElementById('totalOrcamento').textContent}*`;
             window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
         }
 
-        // Recuperar orçamento local
         const salvo = localStorage.getItem('orcamento_aca');
         if (salvo) { orcamento = JSON.parse(salvo); atualizarCarrinho(false); }
 
-        // Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js');
         }
