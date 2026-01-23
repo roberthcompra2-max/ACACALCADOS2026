@@ -3,12 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estoque ACA - Nuvem Oficial</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#4338ca">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
-    
+    <title>Estoque de Calçados - ACA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -17,7 +12,7 @@
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyCmnh6bYskf3kOon7i5tePMqZ6DVyWNwaA",
+            apiKey: "AIzaSyCmnh6bYskf3k" + "Oon7i5tePMqZ6DVyWNwaA",
             authDomain: "estoque-aca.firebaseapp.com",
             projectId: "estoque-aca",
             storageBucket: "estoque-aca.firebasestorage.app",
@@ -27,51 +22,42 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-
-        window.db = db;
-        window.doc = doc;
-        window.setDoc = setDoc;
-        window.getDoc = getDoc;
-
-        window.addEventListener('load', () => {
-            setTimeout(carregarDadosNuvem, 500);
-        });
+        window.db = db; window.doc = doc; window.setDoc = setDoc; window.getDoc = getDoc;
+        window.addEventListener('load', carregarDadosNuvem);
     </script>
 </head>
-<body class="bg-slate-100 min-h-screen text-slate-900 pb-20">
+<body class="bg-slate-50 min-h-screen text-slate-900 pb-10">
 
-    <div class="max-w-7xl mx-auto p-2 sm:p-6">
-        <header class="bg-indigo-800 text-white rounded-2xl p-6 shadow-lg mb-6 flex justify-between items-center">
+    <div class="max-w-7xl mx-auto p-2">
+        <header class="bg-indigo-900 text-white rounded-2xl p-5 shadow-lg mb-4 flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-black uppercase tracking-tighter">Estoque ACA ☁️</h1>
-                <p id="statusNuvem" class="text-indigo-200 text-[10px]">Conectando à nuvem...</p>
+                <h1 class="text-lg sm:text-xl font-black uppercase tracking-tight italic text-amber-400">Estoque de Calçados - ACA</h1>
+                <p id="statusNuvem" class="text-indigo-300 text-[10px] font-bold uppercase tracking-widest">Conectando...</p>
             </div>
-            <button onclick="toggleOrcamento()" class="bg-white text-indigo-800 px-5 py-2.5 rounded-xl font-bold shadow-md flex items-center gap-2">
-                🛒 Orçamento (<span id="cartCount">0</span>)
+            <button onclick="toggleOrcamento()" class="bg-white text-indigo-900 px-4 py-2 rounded-xl font-black shadow-md flex items-center gap-2 text-sm">
+                🛒 Carrinho (<span id="cartCount">0</span>)
             </button>
         </header>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-slate-500 uppercase">1. Atualizar Estoque (Upload Diário)</label>
-                <input type="file" id="fileInput" accept=".txt" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-indigo-50 file:text-indigo-700 cursor-pointer border rounded-xl" />
-            </div>
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-slate-500 uppercase">2. Pesquisa Inteligente</label>
-                <input type="text" id="searchInput" placeholder="Busque descrição ou use tam:38..." class="w-full p-2.5 bg-slate-50 border rounded-xl outline-none shadow-inner" />
-            </div>
+        <div class="bg-white rounded-2xl shadow-sm border p-4 mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input type="text" id="searchInput" placeholder="Busque por produto ou use tam:33..." class="w-full p-3 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold" />
+            <label class="bg-slate-800 text-white p-3 rounded-xl cursor-pointer text-center font-bold text-xs uppercase hover:bg-slate-700 transition-all">
+                ATUALIZAR ESTOQUE
+                <input type="file" id="fileInput" accept=".txt" class="hidden" />
+            </label>
         </div>
 
         <div class="bg-white rounded-2xl shadow-xl border overflow-hidden hidden" id="tableContainer">
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-200">
-                    <thead class="bg-slate-50 text-slate-500">
+                <table class="min-w-full divide-y divide-slate-200" id="mainTable">
+                    <thead class="bg-slate-100">
                         <tr>
-                            <th class="px-4 py-4 text-left text-xs font-black uppercase">NCE</th>
-                            <th class="px-4 py-4 text-left text-xs font-black uppercase">Tam</th>
-                            <th class="px-4 py-4 text-left text-xs font-black uppercase">Descrição / Cor</th>
-                            <th class="px-4 py-4 text-right text-xs font-black uppercase">Preço</th>
-                            <th class="px-4 py-4 text-center text-xs font-black uppercase">Add</th>
+                            <th class="px-3 py-4 text-left text-[10px] font-black text-slate-500 uppercase whitespace-nowrap">NCE</th>
+                            <th class="px-3 py-4 text-left text-[10px] font-black text-slate-500 uppercase">Tam</th>
+                            <th class="px-3 py-4 text-left text-[10px] font-black text-slate-500 uppercase">Mercadoria / Cor</th>
+                            <th class="px-3 py-4 text-center text-[10px] font-black text-slate-500 uppercase">Estoque</th>
+                            <th class="px-3 py-4 text-right text-[10px] font-black text-slate-500 uppercase">Preço</th>
+                            <th class="px-3 py-4 text-center text-[10px] font-black text-slate-500 uppercase">Add</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-100 bg-white"></tbody>
@@ -79,25 +65,23 @@
             </div>
         </div>
 
-        <div id="orcamentoModal" class="fixed inset-0 bg-slate-900/60 z-50 hidden flex justify-end backdrop-blur-sm">
-            <div class="w-full max-w-lg bg-white h-full shadow-2xl p-6 flex flex-col">
+        <div id="orcamentoModal" class="fixed inset-0 bg-slate-900/60 z-50 hidden flex justify-end">
+            <div class="w-full max-w-lg bg-white h-full p-6 flex flex-col shadow-2xl">
                 <div class="flex justify-between items-center mb-6 border-b pb-4">
-                    <h2 class="text-2xl font-black text-indigo-700 uppercase">Orçamento</h2>
-                    <button onclick="toggleOrcamento()" class="text-slate-400 text-3xl">&times;</button>
+                    <h2 class="text-xl font-black text-indigo-900 uppercase">Orçamento</h2>
+                    <button onclick="toggleOrcamento()" class="text-3xl">&times;</button>
                 </div>
-                <div id="pdfArea" class="flex-1 overflow-y-auto pr-2">
-                    <div id="orcamentoItens" class="space-y-4"></div>
-                    <div class="mt-8 border-t-4 border-double pt-6">
-                        <div class="flex justify-between items-center">
-                            <span class="text-xl font-bold text-slate-600 uppercase">Total:</span>
-                            <span id="totalOrcamento" class="text-3xl font-black text-indigo-800">R$ 0,00</span>
-                        </div>
+                <div id="pdfArea" class="flex-1 overflow-y-auto">
+                    <div id="orcamentoItens" class="space-y-3"></div>
+                    <div class="mt-6 border-t-2 pt-4 flex justify-between items-center">
+                        <span class="font-black text-slate-500">TOTAL:</span>
+                        <span id="totalOrcamento" class="text-2xl font-black text-indigo-900">R$ 0,00</span>
                     </div>
                 </div>
-                <div class="mt-8 grid grid-cols-2 gap-3">
-                    <button onclick="gerarPDF()" class="bg-slate-800 text-white font-bold py-4 rounded-2xl">PDF</button>
-                    <button onclick="enviarWhatsApp()" class="bg-emerald-600 text-white font-bold py-4 rounded-2xl">WhatsApp</button>
-                    <button onclick="limparOrcamento()" class="col-span-2 text-slate-400 text-xs py-2 uppercase text-center">Zerar Orçamento</button>
+                <div class="mt-6 grid grid-cols-2 gap-2">
+                    <button onclick="enviarWhatsApp()" class="col-span-2 bg-emerald-600 text-white font-black py-4 rounded-xl shadow-lg hover:bg-emerald-700 transition-colors text-sm tracking-widest italic">ENVIAR WHATSAPP</button>
+                    <button onclick="gerarPDF()" class="bg-slate-800 text-white font-bold py-3 rounded-xl uppercase text-xs">PDF</button>
+                    <button onclick="limparOrcamento()" class="bg-slate-100 text-slate-400 font-bold py-3 rounded-xl uppercase text-[10px]">Limpar Tudo</button>
                 </div>
             </div>
         </div>
@@ -108,118 +92,86 @@
         let produtosGerais = [];
 
         async function carregarDadosNuvem() {
-            const statusEl = document.getElementById('statusNuvem');
             if (!window.db) return;
-
             try {
                 const docSnap = await window.getDoc(window.doc(window.db, "estoque", "atual"));
                 if (docSnap.exists()) {
-                    const dados = docSnap.data();
-                    produtosGerais = dados.lista;
+                    produtosGerais = docSnap.data().lista;
                     renderTable(produtosGerais);
-                    statusEl.textContent = "☁️ Atualizado em: " + dados.data;
-                } else {
-                    statusEl.textContent = "☁️ Nuvem vazia. Importe o arquivo.";
+                    document.getElementById('statusNuvem').textContent = "✅ " + docSnap.data().data;
                 }
-            } catch (e) {
-                statusEl.textContent = "❌ Erro ao buscar dados.";
-            }
+            } catch (e) { console.error(e); }
         }
 
-        document.getElementById('fileInput').addEventListener('change', async function(e) {
-            if (!e.target.files[0]) return;
+        document.getElementById('fileInput').addEventListener('change', function(e) {
             const reader = new FileReader();
             reader.onload = async (event) => {
                 const lines = event.target.result.split('\n');
-                await processarEEnviarParaNuvem(lines);
+                let prods = [];
+                let ultimoNCE = "";
+                lines.forEach(line => {
+                    const clean = line.replace('@', '').replace('\r', '');
+                    if (clean.includes('====') || clean.includes('Descricao') || clean.trim().length < 50) return;
+                    let nce = clean.substring(6, 13).trim();
+                    let tam = clean.substring(13, 18).trim();
+                    let cor = clean.substring(18, 39).trim();
+                    let desc = clean.substring(39, 86).trim(); 
+                    let saldo = clean.substring(86, 97).trim(); 
+                    let preco = clean.substring(107, 118).trim();
+                    if (nce && !isNaN(nce)) ultimoNCE = nce;
+                    if (desc.length > 5 && preco !== "") {
+                        prods.push({ nce: ultimoNCE, tam, cor, desc, saldo, preco });
+                    }
+                });
+                const agora = new Date().toLocaleString('pt-br');
+                await window.setDoc(window.doc(window.db, "estoque", "atual"), { lista: prods, data: agora });
+                location.reload();
             };
             reader.readAsText(e.target.files[0]);
         });
 
-        async function processarEEnviarParaNuvem(lines) {
-            document.getElementById('statusNuvem').textContent = "☁️ Filtrando e Enviando...";
-            let ultimoNCE = "";
-            let produtos = [];
-
-            lines.forEach(line => {
-                const cleanLine = line.replace('@', '').replace('\r', '');
-                
-                // Filtros para remover cabeçalhos do aca.txt
-                if (
-                    cleanLine.includes('====') || 
-                    cleanLine.includes('Relacao') || 
-                    cleanLine.includes('Almoxarifado') || 
-                    cleanLine.includes('Descricao') || 
-                    cleanLine.includes('Situacao') || 
-                    cleanLine.includes('Grupo N.C.E') ||
-                    cleanLine.trim().length < 40
-                ) return;
-
-                let nce = cleanLine.substring(6, 13).trim();
-                let tam = cleanLine.substring(13, 18).trim();
-                let cor = cleanLine.substring(18, 39).trim();
-                let desc = cleanLine.substring(39, 86).trim(); 
-                let precoStr = cleanLine.substring(107, 118).trim();
-
-                if (nce && !isNaN(nce)) ultimoNCE = nce;
-                
-                if (desc.length > 5 && precoStr !== "" && !desc.includes('Mercadorias')) {
-                    produtos.push({ nce: ultimoNCE, tam, cor, desc, preco: precoStr });
-                }
-            });
-
-            try {
-                const agora = new Date().toLocaleString('pt-br');
-                await window.setDoc(window.doc(window.db, "estoque", "atual"), { 
-                    lista: produtos,
-                    data: agora
-                });
-                document.getElementById('statusNuvem').textContent = "✅ Nuvem Atualizada: " + agora;
-                renderTable(produtos);
-            } catch (e) {
-                alert("Erro ao salvar: " + e);
-            }
-        }
-
         function renderTable(produtos) {
-            const tableBody = document.getElementById('tableBody');
-            tableBody.innerHTML = '';
+            const body = document.getElementById('tableBody');
+            body.innerHTML = '';
             produtos.forEach((p) => {
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-indigo-50/50 transition-colors";
-                tr.setAttribute('data-tam', p.tam.toLowerCase());
-                tr.setAttribute('data-nce', p.nce.toLowerCase());
+                tr.className = "hover:bg-slate-50 transition-all border-b border-slate-50";
+                const estoqueNum = Math.floor(parseFloat(p.saldo.replace(',','.')));
+                const estoqueCor = estoqueNum > 0 ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-500';
                 tr.innerHTML = `
-                    <td class="px-4 py-4 font-mono font-bold text-indigo-700 text-sm">${p.nce}</td>
-                    <td class="px-4 py-4 text-slate-600 font-black">${p.tam}</td>
-                    <td class="px-4 py-4">
-                        <div class="font-bold text-slate-800 uppercase text-xs">${p.desc}</div>
-                        <div class="text-[10px] text-slate-400 italic uppercase">${p.cor}</div>
+                    <td class="px-3 py-4 font-black text-indigo-700 text-[13px] whitespace-nowrap">${p.nce}</td>
+                    <td class="px-3 py-4 font-black text-slate-800 text-sm tam-col">${p.tam}</td>
+                    <td class="px-3 py-4 desc-col">
+                        <div class="font-black text-[13px] uppercase text-slate-900 leading-tight">${p.desc}</div>
+                        <div class="text-[13px] font-black uppercase text-red-600 mt-1">${p.cor}</div>
                     </td>
-                    <td class="px-4 py-4 text-right font-black text-slate-900 text-sm">R$ ${p.preco}</td>
-                    <td class="px-4 py-4 text-center">
-                        <button onclick="addOrcamento('${p.nce}', '${p.desc}', '${p.tam}', '${p.preco}')" 
-                            class="bg-indigo-600 text-white w-9 h-9 rounded-xl font-bold shadow-md text-xl">+</button>
+                    <td class="px-3 py-4 text-center">
+                        <span class="${estoqueCor} px-3 py-1 rounded-lg font-black text-xs">
+                            ${estoqueNum}
+                        </span>
+                    </td>
+                    <td class="px-3 py-4 text-right font-black text-indigo-950 text-sm whitespace-nowrap">R$ ${p.preco}</td>
+                    <td class="px-3 py-4 text-center">
+                        <button onclick="addOrcamento('${p.nce}', '${p.desc}', '${p.tam}', '${p.preco}')" class="bg-indigo-600 text-white w-9 h-9 rounded-xl font-bold shadow-sm active:scale-90">+</button>
                     </td>
                 `;
-                tableBody.appendChild(tr);
+                body.appendChild(tr);
             });
             document.getElementById('tableContainer').classList.remove('hidden');
         }
 
         document.getElementById('searchInput').addEventListener('input', function() {
-            const input = this.value.toLowerCase().trim();
+            let val = this.value.toLowerCase().trim();
             const rows = document.querySelectorAll('#tableBody tr');
             rows.forEach(row => {
-                let show = false;
-                if (input.includes(':')) {
-                    const [col, val] = input.split(':');
-                    const attr = row.getAttribute(`data-${col}`);
-                    if (attr && attr.includes(val.trim())) show = true;
+                const tamText = row.querySelector('.tam-col').textContent.toLowerCase().trim();
+                const totalText = row.textContent.toLowerCase();
+                if (val.startsWith('tam:')) {
+                    const tamBusca = val.replace('tam:', '').trim();
+                    row.style.display = (tamText === tamBusca) ? "" : "none";
                 } else {
-                    show = row.textContent.toLowerCase().includes(input);
+                    row.style.display = totalText.includes(val) ? "" : "none";
                 }
-                row.style.display = show ? "" : "none";
             });
         });
 
@@ -230,74 +182,44 @@
             atualizarCarrinho();
         }
 
-        function atualizarCarrinho(deveSalvar = true) {
+        function atualizarCarrinho() {
             document.getElementById('cartCount').textContent = orcamento.reduce((acc, i) => acc + i.qtd, 0);
             const container = document.getElementById('orcamentoItens');
             container.innerHTML = '';
-            let totalGeral = 0;
-
+            let total = 0;
             orcamento.forEach((item, index) => {
-                let valorUnitario = parseFloat(item.preco.replace(/\./g, '').replace(',', '.'));
-                if (item.preco.includes('.')) valorUnitario = valorUnitario / 100;
-                const subtotal = valorUnitario * item.qtd;
-                totalGeral += subtotal;
-
+                let v = parseFloat(item.preco.replace(/\./g, '').replace(',', '.'));
+                if (item.preco.includes('.')) v /= 100;
+                total += v * item.qtd;
                 container.innerHTML += `
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <div class="flex justify-between items-start mb-2">
-                            <div class="max-w-[70%]">
-                                <p class="text-[10px] text-indigo-600 font-black">#${item.nce}</p>
-                                <p class="font-black text-slate-800 uppercase text-xs leading-tight">${item.desc}</p>
-                                <p class="text-[10px] text-slate-500 font-bold">TAMANHO: ${item.tam}</p>
-                            </div>
-                            <span class="font-black text-indigo-900 text-sm">R$ ${subtotal.toLocaleString('pt-br', {minimumFractionDigits: 2})}</span>
+                    <div class="bg-slate-50 p-3 rounded-xl border flex justify-between items-center shadow-sm text-[11px]">
+                        <div class="max-w-[65%]">
+                            <p class="font-black uppercase text-slate-700 leading-tight">${item.desc}</p>
+                            <p class="text-indigo-600 font-bold mt-1 uppercase text-[9px]">Tamanho: ${item.tam} | R$ ${item.preco}</p>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-2 bg-white border rounded-lg p-1">
-                                <button onclick="alterarQtd(${index}, -1)" class="w-7 h-7 flex items-center justify-center bg-slate-50 rounded font-black">-</button>
-                                <span class="font-black text-sm w-4 text-center">${item.qtd}</span>
-                                <button onclick="alterarQtd(${index}, 1)" class="w-7 h-7 flex items-center justify-center bg-slate-50 rounded font-black">+</button>
-                            </div>
-                            <button onclick="removerItem(${index})" class="text-red-500 text-[10px] font-bold uppercase">Excluir</button>
+                        <div class="flex items-center gap-2">
+                            <button onclick="alterarQtd(${index}, -1)" class="w-8 h-8 bg-white border rounded-lg font-black">-</button>
+                            <span class="font-black">${item.qtd}</span>
+                            <button onclick="alterarQtd(${index}, 1)" class="w-8 h-8 bg-white border rounded-lg font-black">+</button>
                         </div>
                     </div>`;
             });
-            document.getElementById('totalOrcamento').textContent = `R$ ${totalGeral.toLocaleString('pt-br', {minimumFractionDigits: 2})}`;
-            if (deveSalvar) localStorage.setItem('orcamento_aca', JSON.stringify(orcamento));
+            document.getElementById('totalOrcamento').textContent = `R$ ${total.toLocaleString('pt-br', {minimumFractionDigits: 2})}`;
+            localStorage.setItem('orcamento_aca', JSON.stringify(orcamento));
         }
 
-        function alterarQtd(index, delta) {
-            orcamento[index].qtd += delta;
-            if (orcamento[index].qtd <= 0) orcamento.splice(index, 1);
-            atualizarCarrinho();
-        }
-        function removerItem(index) { orcamento.splice(index, 1); atualizarCarrinho(); }
+        function alterarQtd(i, d) { orcamento[i].qtd += d; if (orcamento[i].qtd <= 0) orcamento.splice(i, 1); atualizarCarrinho(); }
         function toggleOrcamento() { document.getElementById('orcamentoModal').classList.toggle('hidden'); }
-        function limparOrcamento() { if(confirm("Limpar Orçamento?")) { orcamento = []; localStorage.removeItem('orcamento_aca'); atualizarCarrinho(false); } }
-
-        function gerarPDF() {
-            const element = document.getElementById('pdfArea');
-            html2pdf().from(element).save('Orcamento_ACA.pdf');
-        }
-
+        function limparOrcamento() { if(confirm("Zerar orçamento?")) { orcamento = []; atualizarCarrinho(); } }
+        function gerarPDF() { html2pdf().from(document.getElementById('pdfArea')).save('Orcamento_ACA.pdf'); }
         function enviarWhatsApp() {
-            if(orcamento.length === 0) return;
-            let msg = "📝 *NOVO ORÇAMENTO ACA*\n\n";
-            orcamento.forEach(i => {
-                let vU = parseFloat(i.preco.replace(/\./g, '').replace(',', '.'));
-                if (i.preco.includes('.')) vU = vU / 100;
-                msg += `✅ *${i.qtd}x* ${i.desc} (${i.tam}) - R$ ${(vU*i.qtd).toLocaleString('pt-br', {minimumFractionDigits: 2})}\n`;
-            });
-            msg += `\n💰 *TOTAL GERAL: ${document.getElementById('totalOrcamento').textContent}*`;
+            let msg = "*ORÇAMENTO ACA*\n\n";
+            orcamento.forEach(i => msg += `• ${i.qtd}x ${i.desc} (Tam: ${i.tam})\n`);
+            msg += `\n*TOTAL: ${document.getElementById('totalOrcamento').textContent}*`;
             window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
         }
-
         const salvo = localStorage.getItem('orcamento_aca');
-        if (salvo) { orcamento = JSON.parse(salvo); atualizarCarrinho(false); }
-
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js');
-        }
+        if (salvo) { orcamento = JSON.parse(salvo); atualizarCarrinho(); }
     </script>
 </body>
 </html>
