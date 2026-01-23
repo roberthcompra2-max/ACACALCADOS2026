@@ -32,7 +32,7 @@
         <header class="bg-indigo-900 text-white rounded-2xl p-5 shadow-lg mb-4 flex justify-between items-center">
             <div>
                 <h1 class="text-lg sm:text-xl font-black uppercase italic text-amber-400">Estoque de Calçados - ACA</h1>
-                <p id="statusNuvem" class="text-indigo-300 text-[10px] font-bold uppercase tracking-widest text-white">Sincronizando...</p>
+                <p id="statusNuvem" class="text-indigo-300 text-[10px] font-bold uppercase tracking-widest">Sincronizando...</p>
             </div>
             <button onclick="toggleOrcamento()" class="bg-white text-indigo-900 px-4 py-2 rounded-xl font-black shadow-md flex items-center gap-2 text-sm">
                 🛒 Carrinho (<span id="cartCount">0</span>)
@@ -41,7 +41,7 @@
 
         <div class="bg-white rounded-2xl shadow-sm border p-4 mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <input type="text" id="searchInput" placeholder="Busque por produto ou use tam:33..." class="w-full p-3 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold" />
-            <label class="bg-slate-800 text-white p-3 rounded-xl cursor-pointer text-center font-bold text-xs uppercase hover:bg-slate-700 transition-all">
+            <label class="bg-slate-800 text-white p-3 rounded-xl cursor-pointer text-center font-bold text-xs uppercase">
                 ATUALIZAR ESTOQUE
                 <input type="file" id="fileInput" accept=".txt" class="hidden" />
             </label>
@@ -50,14 +50,14 @@
         <div class="bg-white rounded-2xl shadow-xl border overflow-hidden hidden" id="tableContainer">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-slate-200">
-                    <thead class="bg-slate-100">
+                    <thead class="bg-slate-100 font-black text-[10px] text-slate-500 uppercase text-left">
                         <tr>
-                            <th class="px-3 py-4 text-left text-[10px] font-black text-slate-500 uppercase">NCE</th>
-                            <th class="px-3 py-4 text-left text-[10px] font-black text-slate-500 uppercase">Tam</th>
-                            <th class="px-3 py-4 text-left text-[10px] font-black text-slate-500 uppercase">Mercadoria / Cor</th>
-                            <th class="px-3 py-4 text-center text-[10px] font-black text-slate-500 uppercase">Estoque</th>
-                            <th class="px-3 py-4 text-right text-[10px] font-black text-slate-500 uppercase">Preço</th>
-                            <th class="px-3 py-4 text-center text-[10px] font-black text-slate-500 uppercase">Add</th>
+                            <th class="px-3 py-4">NCE</th>
+                            <th class="px-3 py-4">Tam</th>
+                            <th class="px-3 py-4">Mercadoria / Cor</th>
+                            <th class="px-3 py-4 text-center">Estoque</th>
+                            <th class="px-3 py-4 text-right">Preço</th>
+                            <th class="px-3 py-4 text-center">Add</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-100 bg-white"></tbody>
@@ -68,18 +68,26 @@
         <div id="orcamentoModal" class="fixed inset-0 bg-slate-900/60 z-50 hidden flex justify-end">
             <div class="w-full max-w-lg bg-white h-full p-6 flex flex-col shadow-2xl">
                 <div class="flex justify-between items-center mb-6 border-b pb-4">
-                    <h2 class="text-xl font-black text-indigo-900 uppercase">Orçamento</h2>
+                    <h2 class="text-xl font-black text-indigo-900 uppercase">Orçamento Detalhado</h2>
                     <button onclick="toggleOrcamento()" class="text-3xl">&times;</button>
                 </div>
+                
                 <div id="pdfArea" class="flex-1 overflow-y-auto">
-                    <div id="orcamentoItens" class="space-y-3"></div>
-                    <div class="mt-6 border-t-2 pt-4 flex justify-between items-center">
-                        <span class="font-black text-slate-500 uppercase">TOTAL:</span>
-                        <span id="totalOrcamento" class="text-2xl font-black text-indigo-900">R$ 0,00</span>
+                    <div class="mb-4 text-center border-b pb-2 hidden print:block">
+                        <h1 class="font-black text-xl uppercase">Armazém Paraíba - ACA</h1>
+                        <p class="text-xs uppercase">Orçamento de Calçados</p>
+                    </div>
+
+                    <div id="orcamentoItens" class="space-y-4"></div>
+                    
+                    <div class="mt-8 border-t-4 border-indigo-900 pt-4 flex justify-between items-center">
+                        <span class="font-black text-slate-500 text-sm uppercase italic">Valor Total:</span>
+                        <span id="totalOrcamento" class="text-3xl font-black text-indigo-900">R$ 0,00</span>
                     </div>
                 </div>
+
                 <div class="mt-6 grid grid-cols-2 gap-2">
-                    <button onclick="enviarWhatsApp()" class="col-span-2 bg-emerald-600 text-white font-black py-4 rounded-xl shadow-lg">WHATSAPP</button>
+                    <button onclick="enviarWhatsApp()" class="col-span-2 bg-emerald-600 text-white font-black py-4 rounded-xl shadow-lg">ENVIAR WHATSAPP</button>
                     <button onclick="gerarPDF()" class="bg-slate-800 text-white font-bold py-3 rounded-xl uppercase text-xs">PDF</button>
                     <button onclick="limparOrcamento()" class="bg-slate-100 text-slate-400 font-bold py-3 rounded-xl uppercase text-[10px]">Limpar</button>
                 </div>
@@ -109,36 +117,22 @@
                 const lines = event.target.result.split('\n');
                 let prods = [];
                 let ultimoNCE = "";
-
                 lines.forEach(line => {
                     const clean = line.replace('@', '').replace('\r', '');
-                    
-                    // FILTRO DE LIMPEZA REFORÇADO:
-                    const upperClean = clean.toUpperCase();
-                    if (upperClean.includes('RELACAO') || 
-                        upperClean.includes('ALMOXARIFADO') || 
-                        upperClean.includes('======') || 
-                        upperClean.includes('PAG :') || 
-                        upperClean.includes('DESCRICAO') ||
-                        clean.trim().length < 50) return;
-
+                    const u = clean.toUpperCase();
+                    if (u.includes('RELACAO') || u.includes('ALMOXARIFADO') || u.includes('====') || u.includes('PAG :') || u.includes('DESCRICAO') || clean.trim().length < 50) return;
                     let nce = clean.substring(6, 13).trim();
                     let tam = clean.substring(13, 18).trim();
                     let cor = clean.substring(18, 39).trim();
                     let desc = clean.substring(39, 86).trim(); 
                     let saldo = clean.substring(86, 97).trim(); 
                     let preco = clean.substring(107, 118).trim();
-
                     if (nce && !isNaN(nce)) ultimoNCE = nce;
-                    
-                    // Só adiciona se o saldo for um número válido (evita NaN)
                     if (desc.length > 5 && preco !== "" && !isNaN(parseFloat(saldo.replace(',','.')))) {
                         prods.push({ nce: ultimoNCE, tam, cor, desc, saldo, preco });
                     }
                 });
-
-                const agora = new Date().toLocaleString('pt-br');
-                await window.setDoc(window.doc(window.db, "estoque", "atual"), { lista: prods, data: agora });
+                await window.setDoc(window.doc(window.db, "estoque", "atual"), { lista: prods, data: new Date().toLocaleString('pt-br') });
                 location.reload();
             };
             reader.readAsText(e.target.files[0]);
@@ -150,10 +144,8 @@
             produtos.forEach((p) => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50 border-b border-slate-50";
-                
                 const estoqueNum = Math.floor(parseFloat(p.saldo.replace(',','.')));
                 const estoqueCor = estoqueNum > 0 ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-500';
-
                 tr.innerHTML = `
                     <td class="px-3 py-4 font-black text-indigo-700 text-[13px]">${p.nce}</td>
                     <td class="px-3 py-4 font-black text-slate-800 text-sm tam-col">${p.tam}</td>
@@ -161,12 +153,10 @@
                         <div class="font-black text-[13px] uppercase text-slate-900 leading-tight">${p.desc}</div>
                         <div class="text-[13px] font-black uppercase text-red-600 mt-1">${p.cor}</div>
                     </td>
-                    <td class="px-3 py-4 text-center">
-                        <span class="${estoqueCor} px-3 py-1 rounded-lg font-black text-xs">${estoqueNum}</span>
-                    </td>
+                    <td class="px-3 py-4 text-center"><span class="${estoqueCor} px-3 py-1 rounded-lg font-black text-xs">${estoqueNum}</span></td>
                     <td class="px-3 py-4 text-right font-black text-indigo-950 text-sm">R$ ${p.preco}</td>
                     <td class="px-3 py-4 text-center">
-                        <button onclick="addOrcamento('${p.nce}', '${p.desc}', '${p.tam}', '${p.preco}')" class="bg-indigo-600 text-white w-9 h-9 rounded-xl font-bold shadow-sm">+</button>
+                        <button onclick="addOrcamento('${p.nce}', '${p.desc}', '${p.tam}', '${p.preco}', '${p.cor}')" class="bg-indigo-600 text-white w-9 h-9 rounded-xl font-bold shadow-sm active:scale-90">+</button>
                     </td>
                 `;
                 body.appendChild(tr);
@@ -174,26 +164,22 @@
             document.getElementById('tableContainer').classList.remove('hidden');
         }
 
-        // Filtro de Busca
         document.getElementById('searchInput').addEventListener('input', function() {
             let val = this.value.toLowerCase().trim();
-            const rows = document.querySelectorAll('#tableBody tr');
-            rows.forEach(row => {
+            document.querySelectorAll('#tableBody tr').forEach(row => {
                 const tamText = row.querySelector('.tam-col').textContent.toLowerCase().trim();
-                const totalText = row.textContent.toLowerCase();
                 if (val.startsWith('tam:')) {
-                    const tamBusca = val.replace('tam:', '').trim();
-                    row.style.display = (tamText === tamBusca) ? "" : "none";
+                    row.style.display = (tamText === val.replace('tam:', '').trim()) ? "" : "none";
                 } else {
-                    row.style.display = totalText.includes(val) ? "" : "none";
+                    row.style.display = row.textContent.toLowerCase().includes(val) ? "" : "none";
                 }
             });
         });
 
-        function addOrcamento(nce, desc, tam, preco) {
+        function addOrcamento(nce, desc, tam, preco, cor) {
             const idx = orcamento.findIndex(i => i.nce === nce && i.tam === tam && i.desc === desc);
             if (idx > -1) orcamento[idx].qtd++;
-            else orcamento.push({ nce, desc, tam, preco, qtd: 1 });
+            else orcamento.push({ nce, desc, tam, preco, cor, qtd: 1 });
             atualizarCarrinho();
         }
 
@@ -201,34 +187,59 @@
             document.getElementById('cartCount').textContent = orcamento.reduce((acc, i) => acc + i.qtd, 0);
             const container = document.getElementById('orcamentoItens');
             container.innerHTML = '';
-            let total = 0;
+            let totalGeral = 0;
+
             orcamento.forEach((item, index) => {
-                let v = parseFloat(item.preco.replace(/\./g, '').replace(',', '.'));
-                if (item.preco.includes('.')) v /= 100;
-                total += v * item.qtd;
+                let valorUnitario = parseFloat(item.preco.replace(/\./g, '').replace(',', '.'));
+                if (item.preco.includes('.')) valorUnitario /= 100;
+                
+                let valorSubtotal = valorUnitario * item.qtd;
+                totalGeral += valorSubtotal;
+
                 container.innerHTML += `
-                    <div class="bg-slate-50 p-3 rounded-xl border flex justify-between items-center text-[11px]">
-                        <div>
-                            <p class="font-black uppercase">${item.desc}</p>
-                            <p class="text-indigo-600 font-bold">T: ${item.tam} | R$ ${item.preco}</p>
+                    <div class="bg-white p-4 rounded-xl border-2 border-slate-100 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="max-w-[70%]">
+                                <p class="font-black uppercase text-slate-900 text-[12px] leading-tight">${item.desc}</p>
+                                <p class="text-red-600 font-black text-[11px] uppercase mt-1">${item.cor}</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="alterarQtd(${index}, -1)" class="w-8 h-8 bg-slate-100 rounded-lg font-black">-</button>
+                                <span class="font-black text-lg w-4 text-center">${item.qtd}</span>
+                                <button onclick="alterarQtd(${index}, 1)" class="w-8 h-8 bg-slate-100 rounded-lg font-black">+</button>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="alterarQtd(${index}, -1)" class="w-8 h-8 bg-white border rounded-lg font-black">-</button>
-                            <span class="font-black">${item.qtd}</span>
-                            <button onclick="alterarQtd(${index}, 1)" class="w-8 h-8 bg-white border rounded-lg font-black">+</button>
+                        <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg mt-2">
+                            <div class="text-[10px] text-slate-500 font-bold">
+                                UNIT: R$ ${valorUnitario.toLocaleString('pt-br', {minimumFractionDigits: 2})}
+                                <span class="mx-2">|</span>
+                                TAM: ${item.tam}
+                            </div>
+                            <div class="text-[13px] font-black text-indigo-900">
+                                SUBTOTAL: R$ ${valorSubtotal.toLocaleString('pt-br', {minimumFractionDigits: 2})}
+                            </div>
                         </div>
                     </div>`;
             });
-            document.getElementById('totalOrcamento').textContent = `R$ ${total.toLocaleString('pt-br', {minimumFractionDigits: 2})}`;
+            document.getElementById('totalOrcamento').textContent = `R$ ${totalGeral.toLocaleString('pt-br', {minimumFractionDigits: 2})}`;
         }
+
         function alterarQtd(i, d) { orcamento[i].qtd += d; if (orcamento[i].qtd <= 0) orcamento.splice(i, 1); atualizarCarrinho(); }
         function toggleOrcamento() { document.getElementById('orcamentoModal').classList.toggle('hidden'); }
         function limparOrcamento() { if(confirm("Zerar orçamento?")) { orcamento = []; atualizarCarrinho(); } }
         function gerarPDF() { html2pdf().from(document.getElementById('pdfArea')).save('Orcamento_ACA.pdf'); }
+        
         function enviarWhatsApp() {
-            let msg = "*ORÇAMENTO ACA*\n\n";
-            orcamento.forEach(i => msg += `• ${i.qtd}x ${i.desc} (Tam: ${i.tam})\n`);
-            msg += `\n*TOTAL: ${document.getElementById('totalOrcamento').textContent}*`;
+            let msg = "*ORÇAMENTO DE CALÇADOS - ACA*\n----------------------------------\n";
+            orcamento.forEach(i => {
+                let unit = parseFloat(i.preco.replace(/\./g, '').replace(',', '.'));
+                if (i.preco.includes('.')) unit /= 100;
+                let sub = unit * i.qtd;
+                msg += `✅ *${i.qtd}x ${i.desc}*\n`;
+                msg += `🎨 COR: ${i.cor} | TAM: ${i.tam}\n`;
+                msg += `💰 UNIT: R$ ${unit.toLocaleString('pt-br', {minimumFractionDigits: 2})} | SUB: R$ ${sub.toLocaleString('pt-br', {minimumFractionDigits: 2})}\n\n`;
+            });
+            msg += `----------------------------------\n*TOTAL GERAL: ${document.getElementById('totalOrcamento').textContent}*`;
             window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
         }
     </script>
