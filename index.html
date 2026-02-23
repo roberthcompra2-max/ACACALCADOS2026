@@ -35,9 +35,7 @@
             <div class="max-w-7xl mx-auto">
                 <div class="flex justify-between items-center mb-2 relative">
                     <h1 id="brandName" class="text-xs font-black italic uppercase tracking-tighter">ACA <span class="text-amber-400">ESTOQUE</span></h1>
-                    
                     <div id="tituloAmostraCentral" class="hidden absolute left-1/2 -translate-x-1/2 text-sm font-black text-amber-400 tracking-[0.2em] uppercase">AMOSTRAS</div>
-
                     <div class="flex gap-1.5">
                         <button onclick="gerarAmostras()" id="btnAmostra" class="bg-cyan-600 text-white px-2 py-1 rounded-md font-black text-[9px] uppercase">📋 AMOSTRAS</button>
                         <label class="bg-amber-400 text-indigo-950 px-2 py-1 rounded-md cursor-pointer font-black text-[9px] uppercase">
@@ -156,17 +154,25 @@
             const minP = modoAmostra ? 0 : (parseFloat(document.getElementById('minPrice').value) || 0);
             const maxP = modoAmostra ? Infinity : (parseFloat(document.getElementById('maxPrice').value) || Infinity);
 
-            let listaFiltrada = dadosEstoque.filter(i => {
-                const stringItem = (i.desc + i.nce + i.cor + i.tam).toLowerCase();
+            // 1. Filtro base
+            let listaBase = dadosEstoque.filter(i => {
+                const stringItem = (i.desc + (i.nce||'') + (i.cor||'') + (i.tam||'')).toLowerCase();
                 const matchBusca = termosBusca.every(termo => stringItem.includes(termo));
                 const matchPreco = i.unitario >= minP && i.unitario <= maxP;
                 const matchAno = anoAtivo ? i.ano === anoAtivo : true;
                 return matchBusca && matchPreco && matchAno && i.total > 0;
             });
 
+            // 2. Cálculo da soma por NCE para o filtro inteligente de Peça Única
+            const somaPorNCE = {};
+            listaBase.forEach(item => {
+                if (!somaPorNCE[item.nce]) somaPorNCE[item.nce] = 0;
+                somaPorNCE[item.nce] += item.total;
+            });
+
             if (modoAmostra) {
                 const grupos = {};
-                listaFiltrada.forEach(item => {
+                listaBase.forEach(item => {
                     const chave = `${item.nce}_${item.cor}`;
                     if (!grupos[chave]) grupos[chave] = [];
                     grupos[chave].push(item);
@@ -179,9 +185,13 @@
                 renderAmostras(listaAmostras);
                 atualizarResumo(listaAmostras, true);
             } else {
-                listaFiltrada = listaFiltrada.filter(i => modoFiltroQtd === 'exato' ? i.total === valorFiltroQtd : i.total >= valorFiltroQtd);
-                renderEstoque(listaFiltrada);
-                atualizarResumo(listaFiltrada, false);
+                // Filtro Peça Única agora checa o estoque TOTAL do modelo (NCE)
+                let listaFiltradaEstoque = listaBase.filter(i => {
+                    const totalDoModelo = somaPorNCE[i.nce];
+                    return modoFiltroQtd === 'exato' ? totalDoModelo === valorFiltroQtd : totalDoModelo >= valorFiltroQtd;
+                });
+                renderEstoque(listaFiltradaEstoque);
+                atualizarResumo(listaFiltradaEstoque, false);
             }
         }
 
